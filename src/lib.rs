@@ -75,7 +75,7 @@ pub unsafe extern "C" fn init() -> u64 {
                 list.push_back(Box::new(Meteora::new(program_id)));
             }
             5 => {
-                list.push_back(Box::new(Pumpfun::new(program_id)));
+                //list.push_back(Box::new(Pumpfun::new(program_id)));
             }
             _ => {}
         }
