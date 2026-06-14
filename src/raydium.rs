@@ -242,6 +242,84 @@ impl Raydium {
     }
 }
 
+// ─── Raydium AMM v4 (native, no Anchor discriminator) ────────────────────────
+
+/// Minimum byte length of a Raydium AMM v4 pool state account.
+/// Verified against catscope-rust-bot/src/trader/dex/raydium.rs.
+const AMM_V4_MIN_LEN: usize = 624;
+
+// Pool state offsets (no discriminator prefix).
+const AMM_OFF_COIN_VAULT: usize = 336;
+const AMM_OFF_PC_VAULT: usize = 368;
+const AMM_OFF_MARKET_ID: usize = 528;
+
+pub struct RaydiumAmm {
+    pub program_id: Pubkey,
+}
+
+impl GuestFilter for RaydiumAmm {
+    fn program_id_list(&self) -> Vec<Pubkey> {
+        vec![self.program_id]
+    }
+
+    fn edge(&self, header: &AccountHeader, data: &[u8]) -> VecDeque<FilterEdge> {
+        let mut list = VecDeque::new();
+        let id = header.pubkey;
+
+        #[cfg(any(target_os = "wasi", target_os = "linux"))]
+        HostImport::log(format!(
+            "raydium_amm_edge - pubkey {}; data len {}",
+            id,
+            data.len()
+        ));
+
+        if data.len() < AMM_V4_MIN_LEN {
+            return list;
+        }
+        let pk_len = std::mem::size_of::<Pubkey>();
+        let read_pk = |off: usize| Pubkey::try_from(&data[off..off + pk_len]).unwrap();
+
+        // program → pool
+        list.push_back(FilterEdge {
+            slot: header.slot,
+            weight: WEIGHT_DIRECT,
+            from: self.program_id,
+            to: id,
+        });
+        // pool → coin vault
+        list.push_back(FilterEdge {
+            slot: header.slot,
+            weight: WEIGHT_DIRECT,
+            from: id,
+            to: read_pk(AMM_OFF_COIN_VAULT),
+        });
+        // pool → pc vault
+        list.push_back(FilterEdge {
+            slot: header.slot,
+            weight: WEIGHT_DIRECT,
+            from: id,
+            to: read_pk(AMM_OFF_PC_VAULT),
+        });
+        // pool → market (OpenBook market account)
+        list.push_back(FilterEdge {
+            slot: header.slot,
+            weight: WEIGHT_DIRECT,
+            from: id,
+            to: read_pk(AMM_OFF_MARKET_ID),
+        });
+
+        list
+    }
+}
+
+impl RaydiumAmm {
+    pub fn new(program_id: &Pubkey) -> Self {
+        Self { program_id: *program_id }
+    }
+}
+
+// ─── Raydium CLMM discriminators ─────────────────────────────────────────────
+
 pub fn discriminator_amm_config() -> [u8; 8] {
     [218, 244, 33, 104, 203, 203, 43, 111]
 }

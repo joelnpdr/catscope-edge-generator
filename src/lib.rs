@@ -1,7 +1,9 @@
+use self::kamino::Kamino;
 use self::meteora::Meteora;
 use self::orca::Orca;
 use self::pumpfun::Pumpfun;
-use self::raydium::Raydium;
+use self::raydium::{Raydium, RaydiumAmm};
+use self::sanctum::Sanctum;
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
 use primitive::{
     filter::{ptr_to_filter, CatscopeFilter},
@@ -18,12 +20,14 @@ use solpipe::Solpipe;
 use std::collections::VecDeque;
 
 //pub mod all;
+pub mod kamino;
 pub mod meteora;
 pub mod orca;
 pub mod primitive;
 pub mod pumpfun;
 pub mod raydium;
 pub mod safejar;
+pub mod sanctum;
 pub mod solpipe;
 
 pub(crate) const DISCRIMINATOR_SIZE: usize = 8;
@@ -72,10 +76,16 @@ pub unsafe extern "C" fn init() -> u64 {
                 list.push_back(Box::new(Raydium::new(program_id)));
             }
             4 => {
-                list.push_back(Box::new(Meteora::new(program_id)));
+                list.push_back(Box::new(RaydiumAmm::new(program_id)));
             }
             5 => {
-                //list.push_back(Box::new(Pumpfun::new(program_id)));
+                list.push_back(Box::new(Meteora::new(program_id)));
+            }
+            6 => {
+                list.push_back(Box::new(Kamino::new(program_id)));
+            }
+            7 => {
+                list.push_back(Box::new(Sanctum::new(program_id)));
             }
             _ => {}
         }
