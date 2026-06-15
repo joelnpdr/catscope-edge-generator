@@ -50,7 +50,7 @@
 
 use std::collections::VecDeque;
 
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{pubkey::Pubkey, system_program::ID as system_id};
 
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
 use crate::primitive::wasmimport::HostImport;
@@ -113,12 +113,14 @@ impl GuestFilter for Sanctum {
                     &data[OFF_PS_LP_TOKEN_MINT..OFF_PS_LP_TOKEN_MINT + pubkey_len],
                 )
                 .unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: id,
-                    to: mint_pk,
-                });
+                if mint_pk != system_id {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: id,
+                        to: mint_pk,
+                    });
+                }
             }
         } else if id == self.lst_state_list_pda
             && !data.is_empty()
@@ -139,12 +141,14 @@ impl GuestFilter for Sanctum {
                 if data.len() >= mint_off + pubkey_len {
                     let mint_pk =
                         Pubkey::try_from(&data[mint_off..mint_off + pubkey_len]).unwrap();
-                    list.push_back(FilterEdge {
-                        slot: header.slot,
-                        weight: WEIGHT_DIRECT,
-                        from: id,
-                        to: mint_pk,
-                    });
+                    if mint_pk != system_id {
+                        list.push_back(FilterEdge {
+                            slot: header.slot,
+                            weight: WEIGHT_DIRECT,
+                            from: id,
+                            to: mint_pk,
+                        });
+                    }
                 }
             }
         }

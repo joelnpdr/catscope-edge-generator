@@ -34,6 +34,10 @@ impl GuestFilter for Raydium {
         let prefix = self.d_amm_config.len();
         let mut i = prefix;
         let pubkey_len = std::mem::size_of::<Pubkey>();
+        let read_pk = |off: usize| -> Option<Pubkey> {
+            let pk = Pubkey::try_from(&data[off..(off + pubkey_len)]).unwrap();
+            if pk == system_program::ID { None } else { Some(pk) }
+        };
         #[cfg(any(target_os = "wasi", target_os = "linux"))]
         HostImport::log(format!(
             "raydium_edge - 1 - pubkey {}; data len {}",
@@ -45,158 +49,170 @@ impl GuestFilter for Raydium {
             // protocol owner
             {
                 i += 3;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_SYMLINK,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_SYMLINK,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
             // fund owner
             {
                 i += pubkey_len + 18;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: id,
-                    to: pubkey,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: id,
+                        to: pubkey,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_protocol_position_state, data) {
             // pool
             {
                 i += 1;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_support_mint_associated, data) {
             // skipping mint edges
         } else if match_discriminator(&self.d_tick_array_state, data) {
             // pool
             {
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_personal_position_state, data) {
             // nft mint
             {
                 i += 1;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_SYMLINK,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_SYMLINK,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
             // pool
             {
                 i += pubkey_len;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_observation_state, data) {
             // pool
             {
                 i += 11;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_tick_array_bitmap_extension, data) {
             // pool id
             {
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_pool_state, data) {
             // amm config
             {
                 i += 1;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: pubkey,
-                    to: id,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: pubkey,
+                        to: id,
+                    });
+                }
             }
             // owner
             {
                 i += pubkey_len;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: id,
-                    to: pubkey,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: id,
+                        to: pubkey,
+                    });
+                }
             }
             // token vault 0
             {
                 i += pubkey_len + 2 * pubkey_len;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: id,
-                    to: pubkey,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: id,
+                        to: pubkey,
+                    });
+                }
             }
             // token vault 1
             {
                 i += pubkey_len;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: id,
-                    to: pubkey,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: id,
+                        to: pubkey,
+                    });
+                }
             }
             // observation account
             {
                 i += pubkey_len;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                list.push_back(FilterEdge {
-                    slot: header.slot,
-                    weight: WEIGHT_DIRECT,
-                    from: id,
-                    to: pubkey,
-                });
+                if let Some(pubkey) = read_pk(i) {
+                    list.push_back(FilterEdge {
+                        slot: header.slot,
+                        weight: WEIGHT_DIRECT,
+                        from: id,
+                        to: pubkey,
+                    });
+                }
             }
         } else if match_discriminator(&self.d_operation_state, data) {
             i += 1;
             // operation owners
             for _k in 0..10 {
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                if pubkey != system_program::ID {
+                if let Some(pubkey) = read_pk(i) {
                     list.push_back(FilterEdge {
                         slot: header.slot,
                         weight: WEIGHT_DIRECT,
@@ -277,7 +293,10 @@ impl GuestFilter for RaydiumAmm {
             return list;
         }
         let pk_len = std::mem::size_of::<Pubkey>();
-        let read_pk = |off: usize| Pubkey::try_from(&data[off..off + pk_len]).unwrap();
+        let read_pk = |off: usize| {
+            let pk = Pubkey::try_from(&data[off..off + pk_len]).unwrap();
+            if pk == system_program::ID { None } else { Some(pk) }
+        };
 
         // program → pool
         list.push_back(FilterEdge {
@@ -287,26 +306,32 @@ impl GuestFilter for RaydiumAmm {
             to: id,
         });
         // pool → coin vault
-        list.push_back(FilterEdge {
-            slot: header.slot,
-            weight: WEIGHT_DIRECT,
-            from: id,
-            to: read_pk(AMM_OFF_COIN_VAULT),
-        });
+        if let Some(pk) = read_pk(AMM_OFF_COIN_VAULT) {
+            list.push_back(FilterEdge {
+                slot: header.slot,
+                weight: WEIGHT_DIRECT,
+                from: id,
+                to: pk,
+            });
+        }
         // pool → pc vault
-        list.push_back(FilterEdge {
-            slot: header.slot,
-            weight: WEIGHT_DIRECT,
-            from: id,
-            to: read_pk(AMM_OFF_PC_VAULT),
-        });
+        if let Some(pk) = read_pk(AMM_OFF_PC_VAULT) {
+            list.push_back(FilterEdge {
+                slot: header.slot,
+                weight: WEIGHT_DIRECT,
+                from: id,
+                to: pk,
+            });
+        }
         // pool → market (OpenBook market account)
-        list.push_back(FilterEdge {
-            slot: header.slot,
-            weight: WEIGHT_DIRECT,
-            from: id,
-            to: read_pk(AMM_OFF_MARKET_ID),
-        });
+        if let Some(pk) = read_pk(AMM_OFF_MARKET_ID) {
+            list.push_back(FilterEdge {
+                slot: header.slot,
+                weight: WEIGHT_DIRECT,
+                from: id,
+                to: pk,
+            });
+        }
 
         list
     }
