@@ -12,6 +12,7 @@ use solana_sdk::pubkey::Pubkey;
 use std::collections::VecDeque;
 
 /// Source: https://github.com/raydium-io/raydium-amm/blob/master/program/src/state.rs and https://docs.raydium.io/products/amm-v4/accounts.
+/// Not an Anchor program
 pub struct RaydiumAmm {
     len_amminfo: usize,
     pub program_id: Pubkey,

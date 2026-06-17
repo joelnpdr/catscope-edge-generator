@@ -13,6 +13,8 @@ use crate::{
     pubkey_not_blank,
 };
 
+/// Sources: https://docs.raydium.io/products/clmm/accounts and https://github.com/raydium-io/raydium-clmm/blob/master/programs/amm/src/states/pool.rs
+/// Anchor program
 pub struct RaydiumCLMM {
     len_poolstate: usize,
     len_ammconfig: usize,
@@ -32,8 +34,12 @@ impl GuestFilter for RaydiumCLMM {
         vec![self.program_id]
     }
 
-    fn edge(&self, header: &AccountHeader, data: &[u8]) -> VecDeque<FilterEdge> {
+    fn edge(&self, header: &AccountHeader, anchor_data: &[u8]) -> VecDeque<FilterEdge> {
         let mut list = VecDeque::new();
+        if anchor_data.len() < 8 {
+            return list;
+        }
+        let data = &anchor_data[8..];
         let id = header.pubkey;
         if self.len_poolstate == data.len() {
             let ptr = data.as_ptr() as *const PoolState;

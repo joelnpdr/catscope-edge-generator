@@ -14,6 +14,7 @@ use crate::{
 };
 
 /// Sources: https://docs.raydium.io/products/cpmm/accounts and https://github.com/raydium-io/raydium-cp-swap/blob/master/programs/cp-swap/src/states/pool.rs
+/// Anchor program
 pub struct RaydiumCPMM {
     len_ammconfig: usize,
     len_poolstate: usize,
@@ -33,10 +34,13 @@ impl GuestFilter for RaydiumCPMM {
         vec![self.program_id]
     }
 
-    fn edge(&self, header: &AccountHeader, data: &[u8]) -> VecDeque<FilterEdge> {
+    fn edge(&self, header: &AccountHeader, anchor_data: &[u8]) -> VecDeque<FilterEdge> {
         let mut list = VecDeque::new();
         let id = header.pubkey;
-
+        if anchor_data.len() < 8 {
+            return list;
+        }
+        let data = &anchor_data[8..];
         #[cfg(any(target_os = "wasi", target_os = "linux"))]
         HostImport::log(format!(
             "raydium_amm_edge - pubkey {}; data len {}",
