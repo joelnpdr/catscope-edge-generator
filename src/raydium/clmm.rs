@@ -210,16 +210,6 @@ struct DynamicFeeInfo {
     last_update_timestamp: u64,
     padding: [u8; 46],
 }
-#[repr(C, packed)]
-struct DynamicFeeConfig {
-    index: u16,                      // identifier; PDA seed component
-    filter_period: u16, // seconds — within this window the volatility reference is held
-    decay_period: u16,  // seconds — beyond this window the reference fully decays
-    reduction_factor: u16, // fixed-point in [1, 10_000); applied at decay
-    dynamic_fee_control: u32, // fixed-point in (0, 100_000); fee-rate gain
-    max_volatility_accumulator: u32, // ceiling on the volatility accumulator
-    padding: [u64; 8],
-}
 
 #[repr(C, packed)]
 struct RewardInfo {
