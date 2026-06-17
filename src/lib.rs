@@ -2,7 +2,7 @@ use self::kamino::Kamino;
 use self::meteora::Meteora;
 use self::orca::Orca;
 use self::pumpfun::Pumpfun;
-use self::raydium::{Raydium, RaydiumAmm};
+use self::raydium::{RaydiumAmm, RaydiumCLMM};
 use self::sanctum::Sanctum;
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
 use primitive::{
@@ -16,6 +16,8 @@ use primitive::{
     tree::{parse_program_list, ProgramList},
 };
 use safejar::Safejar;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::system_program;
 use solpipe::Solpipe;
 use std::collections::VecDeque;
 
@@ -73,7 +75,7 @@ pub unsafe extern "C" fn init() -> u64 {
                 list.push_back(Box::new(Orca::new(program_id)));
             }
             3 => {
-                list.push_back(Box::new(Raydium::new(program_id)));
+                list.push_back(Box::new(RaydiumCLMM::new(program_id)));
             }
             4 => {
                 list.push_back(Box::new(RaydiumAmm::new(program_id)));
@@ -214,4 +216,27 @@ pub unsafe extern "C" fn edge(cat_ptr: u64, ptr: u64, size: u32) -> u64 {
         last_ptr = out.pointer();
     }
     last_ptr
+}
+
+#[inline]
+pub(crate) fn pubkey_is_blank(pubkey: &Pubkey) -> Option<&Pubkey> {
+    if pubkey.eq(&system_program::ID) {
+        None
+    } else {
+        Some(pubkey)
+    }
+}
+
+#[inline]
+pub(crate) fn read_pubkey(data: &[u8]) -> Option<&Pubkey> {
+    if data.len() != 32 {
+        return None;
+    }
+    let ptr = data.as_ptr() as *const Pubkey;
+    let pubkey = unsafe { &*ptr };
+    if pubkey.eq(&system_program::ID) {
+        return None;
+    }
+
+    Some(pubkey)
 }
