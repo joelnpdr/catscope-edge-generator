@@ -1,8 +1,7 @@
 use self::kamino::Kamino;
 use self::meteora::Meteora;
 use self::orca::Orca;
-use self::pumpfun::Pumpfun;
-use self::raydium::{RaydiumAmm, RaydiumCLMM};
+use self::raydium::{amm::RaydiumAmm, clmm::RaydiumCLMM, cpmm::RaydiumCPMM};
 use self::sanctum::Sanctum;
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
 use primitive::{
@@ -78,15 +77,18 @@ pub unsafe extern "C" fn init() -> u64 {
                 list.push_back(Box::new(RaydiumCLMM::new(program_id)));
             }
             4 => {
-                list.push_back(Box::new(RaydiumAmm::new(program_id)));
+                list.push_back(Box::new(RaydiumCPMM::new(program_id)));
             }
             5 => {
-                list.push_back(Box::new(Meteora::new(program_id)));
+                list.push_back(Box::new(RaydiumAmm::new(program_id)));
             }
             6 => {
-                list.push_back(Box::new(Kamino::new(program_id)));
+                list.push_back(Box::new(Meteora::new(program_id)));
             }
             7 => {
+                list.push_back(Box::new(Kamino::new(program_id)));
+            }
+            8 => {
                 list.push_back(Box::new(Sanctum::new(program_id)));
             }
             _ => {}
@@ -219,7 +221,7 @@ pub unsafe extern "C" fn edge(cat_ptr: u64, ptr: u64, size: u32) -> u64 {
 }
 
 #[inline]
-pub(crate) fn pubkey_is_blank(pubkey: &Pubkey) -> Option<&Pubkey> {
+pub(crate) fn pubkey_not_blank(pubkey: &Pubkey) -> Option<&Pubkey> {
     if pubkey.eq(&system_program::ID) {
         None
     } else {
