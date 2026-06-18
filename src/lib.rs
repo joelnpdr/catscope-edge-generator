@@ -1,8 +1,7 @@
-use self::kamino::Kamino;
-use self::meteora::Meteora;
-use self::orca::Orca;
-use self::raydium::{amm::RaydiumAmm, clmm::RaydiumCLMM, cpmm::RaydiumCPMM};
-use self::sanctum::Sanctum;
+use crate::kamino::Kamino;
+use crate::meteora::Meteora;
+use crate::orca::Orca;
+use crate::sanctum::Sanctum;
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
 use primitive::{
     filter::{ptr_to_filter, CatscopeFilter},
@@ -74,12 +73,18 @@ pub unsafe extern "C" fn init() -> u64 {
                 list.push_back(Box::new(Orca::new(program_id)));
             }
             3 => {
+                use crate::raydium::clmm::RaydiumCLMM;
+
                 list.push_back(Box::new(RaydiumCLMM::new(program_id)));
             }
             4 => {
+                use crate::raydium::cpmm::RaydiumCPMM;
+
                 list.push_back(Box::new(RaydiumCPMM::new(program_id)));
             }
             5 => {
+                use crate::raydium::amm::RaydiumAmm;
+
                 list.push_back(Box::new(RaydiumAmm::new(program_id)));
             }
             6 => {
