@@ -15,8 +15,8 @@ pub struct Pumpswap {
     d_pool: [u8; 8],
     d_global_config: [u8; 8],
     d_global_volume_accumulator: [u8; 8],
-    d_user_volume_accumulator: [u8; 8],
     pub program_id: Pubkey,
+    global_config: Pubkey,
 }
 
 impl GuestFilter for Pumpswap {
@@ -53,19 +53,13 @@ impl GuestFilter for Pumpswap {
             // lp_supply: u64         (8 bytes, offset 203)
             // coin_creator: Pubkey   (32 bytes, offset 211) — skip, shared per creator across pools
 
-            // creator → pool
-            {
-                i = 11;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                if pubkey != system_id {
-                    list.push_back(FilterEdge {
-                        slot: header.slot,
-                        weight: WEIGHT_DIRECT,
-                        from: pubkey,
-                        to: id,
-                    });
-                }
-            }
+            // global_config → pool (config is the structural parent of all pools)
+            list.push_back(FilterEdge {
+                slot: header.slot,
+                weight: WEIGHT_DIRECT,
+                from: self.global_config,
+                to: id,
+            });
             // pool → lp_mint
             {
                 i = 107;
@@ -173,35 +167,6 @@ impl GuestFilter for Pumpswap {
                     });
                 }
             }
-        } else if match_discriminator(&self.d_user_volume_accumulator, data) {
-            #[cfg(any(target_os = "wasi", target_os = "linux"))]
-            HostImport::log(format!(
-                "pumpswap_edge - user_volume_accumulator - pubkey {};",
-                id
-            ));
-
-            // UserVolumeAccumulator layout after discriminator (8 bytes):
-            // user: Pubkey                  (32 bytes, offset 8)
-            // needs_claim: bool             (1 byte,   offset 40)
-            // total_unclaimed_tokens: u64   (8 bytes,  offset 41)
-            // total_claimed_tokens: u64     (8 bytes,  offset 49)
-            // current_sol_volume: u64       (8 bytes,  offset 57)
-            // last_update_timestamp: i64    (8 bytes,  offset 65)
-            // has_total_claimed_tokens: bool (1 byte,  offset 73)
-
-            // user → user_volume_accumulator
-            {
-                i = 8;
-                let pubkey = Pubkey::try_from(&data[i..(i + pubkey_len)]).unwrap();
-                if pubkey != system_id {
-                    list.push_back(FilterEdge {
-                        slot: header.slot,
-                        weight: WEIGHT_DIRECT,
-                        from: pubkey,
-                        to: id,
-                    });
-                }
-            }
         }
 
         #[cfg(any(target_os = "wasi", target_os = "linux"))]
@@ -212,12 +177,14 @@ impl GuestFilter for Pumpswap {
 
 impl Pumpswap {
     pub fn new(program_id: &Pubkey) -> Self {
+        let (global_config, _) =
+            Pubkey::find_program_address(&[b"global_config"], program_id);
         Self {
             program_id: *program_id,
+            global_config,
             d_pool: pool_discriminator(),
             d_global_config: global_config_discriminator(),
             d_global_volume_accumulator: global_volume_accumulator_discriminator(),
-            d_user_volume_accumulator: user_volume_accumulator_discriminator(),
         }
     }
 }
@@ -234,6 +201,3 @@ pub fn global_volume_accumulator_discriminator() -> [u8; 8] {
     [202, 42, 246, 43, 142, 190, 30, 255]
 }
 
-pub fn user_volume_accumulator_discriminator() -> [u8; 8] {
-    [86, 255, 112, 14, 102, 53, 154, 250]
-}

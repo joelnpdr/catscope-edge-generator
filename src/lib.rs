@@ -24,6 +24,7 @@ pub mod meteora;
 pub mod orca;
 pub mod primitive;
 pub mod raydium;
+pub mod pumpswap;
 pub mod safejar;
 pub mod sanctum;
 pub mod solpipe;
