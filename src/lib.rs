@@ -1,7 +1,6 @@
 use self::kamino::Kamino;
 use self::meteora::Meteora;
 use self::orca::Orca;
-use self::pumpfun::Pumpfun;
 use self::raydium::{Raydium, RaydiumAmm};
 use self::sanctum::Sanctum;
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
@@ -24,7 +23,6 @@ pub mod kamino;
 pub mod meteora;
 pub mod orca;
 pub mod primitive;
-pub mod pumpfun;
 pub mod raydium;
 pub mod safejar;
 pub mod sanctum;
