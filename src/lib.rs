@@ -1,6 +1,8 @@
 use self::kamino::Kamino;
+use self::kvault::Kvault;
 use self::meteora::Meteora;
 use self::orca::Orca;
+use self::pumpswap::Pumpswap;
 use self::raydium::{Raydium, RaydiumAmm};
 use self::sanctum::Sanctum;
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
@@ -20,6 +22,7 @@ use std::collections::VecDeque;
 
 //pub mod all;
 pub mod kamino;
+pub mod kvault;
 pub mod meteora;
 pub mod orca;
 pub mod primitive;
@@ -85,6 +88,12 @@ pub unsafe extern "C" fn init() -> u64 {
             }
             7 => {
                 list.push_back(Box::new(Sanctum::new(program_id)));
+            }
+            8 => {
+                list.push_back(Box::new(Pumpswap::new(program_id)));
+            }
+            9 => {
+                list.push_back(Box::new(Kvault::new(program_id)));
             }
             _ => {}
         }
