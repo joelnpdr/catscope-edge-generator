@@ -1,7 +1,11 @@
-use crate::kamino::Kamino;
+use crate::kvault::Kvault;
 use crate::meteora::Meteora;
 use crate::orca::Orca;
+use crate::pumpswap::Pumpswap;
+use crate::raydium::amm::RaydiumAmm;
+use crate::raydium::cpmm::RaydiumCPMM;
 use crate::sanctum::Sanctum;
+use crate::{kamino::Kamino, raydium::clmm::RaydiumCLMM};
 #[cfg(any(target_os = "wasi", target_os = "linux"))]
 use primitive::{
     filter::{ptr_to_filter, CatscopeFilter},
@@ -21,15 +25,16 @@ use std::collections::VecDeque;
 
 //pub mod all;
 pub mod kamino;
+pub mod kvault;
 pub mod meteora;
 pub mod orca;
 pub mod primitive;
-pub mod pumpfun;
+pub mod pumpswap;
 pub mod raydium;
 pub mod safejar;
 pub mod sanctum;
 pub mod solpipe;
-
+//#[cfg(target_os = "wasi")]
 pub(crate) const DISCRIMINATOR_SIZE: usize = 8;
 /// A place holder for starting the web assembly.
 /// # Safety
@@ -42,7 +47,6 @@ pub extern "C" fn _start() -> i32 {
 /// The code below defines a basic filter (edge generator) for
 /// system, token, Safejar, and Solpipe accounts.
 /// # Safety
-#[cfg(target_os = "wasi")]
 #[no_mangle] // Prevent Rust from changing the function name
 pub unsafe extern "C" fn init() -> u64 {
     let mut hi = HostImport::default();
@@ -57,48 +61,33 @@ pub unsafe extern "C" fn init() -> u64 {
         },
         Err(_) => return 0,
     };
-    let program_list = match parse_program_list(args.slice()) {
+    let _program_list = match parse_program_list(args.slice()) {
         Ok(x) => x,
-        Err(_) => return 0,
+        Err(_) => vec![],
     };
-    for (i, program_id) in program_list.iter().enumerate() {
-        match i {
-            0 => {
-                list.push_back(Box::new(Safejar::new(program_id)));
-            }
-            1 => {
-                list.push_back(Box::new(Solpipe::new(program_id)));
-            }
-            2 => {
-                list.push_back(Box::new(Orca::new(program_id)));
-            }
-            3 => {
-                use crate::raydium::clmm::RaydiumCLMM;
-
-                list.push_back(Box::new(RaydiumCLMM::new(program_id)));
-            }
-            4 => {
-                use crate::raydium::cpmm::RaydiumCPMM;
-
-                list.push_back(Box::new(RaydiumCPMM::new(program_id)));
-            }
-            5 => {
-                use crate::raydium::amm::RaydiumAmm;
-
-                list.push_back(Box::new(RaydiumAmm::new(program_id)));
-            }
-            6 => {
-                list.push_back(Box::new(Meteora::new(program_id)));
-            }
-            7 => {
-                list.push_back(Box::new(Kamino::new(program_id)));
-            }
-            8 => {
-                list.push_back(Box::new(Sanctum::new(program_id)));
-            }
-            _ => {}
-        }
-    }
+    let prog_safejar = Pubkey::from_str_const("jarMRc5v8QZLn8AawsmwN426mG9HHVaAtiZwa7rMi9J");
+    list.push_back(Box::new(Safejar::new(&prog_safejar)));
+    let prog_solpipe = Pubkey::from_str_const("CBAidZ5BjA1BYi9WF6Ca1AaWakF2MPxkVgp7oo5tDyW3");
+    list.push_back(Box::new(Solpipe::new(&prog_solpipe)));
+    let prog_orca = Pubkey::from_str_const("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc");
+    list.push_back(Box::new(Orca::new(&prog_orca)));
+    let prog_raydium_clmm = Pubkey::from_str_const("CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK");
+    list.push_back(Box::new(RaydiumCLMM::new(&prog_raydium_clmm)));
+    let prog_raydium_cpmm = Pubkey::from_str_const("CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C");
+    list.push_back(Box::new(RaydiumCPMM::new(&prog_raydium_cpmm)));
+    let prog_raydium_amm = Pubkey::from_str_const("675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8");
+    list.push_back(Box::new(RaydiumAmm::new(&prog_raydium_amm)));
+    let prog_meteora = Pubkey::from_str_const("LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo");
+    list.push_back(Box::new(Meteora::new(&prog_meteora)));
+    let prog_klend = Pubkey::from_str_const("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD");
+    list.push_back(Box::new(Kamino::new(&prog_klend)));
+    let prog_kvault = Pubkey::from_str_const("KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd");
+    list.push_back(Box::new(Kvault::new(&prog_kvault)));
+    let prog_sanctum = Pubkey::from_str_const("5ocnV1qiCgaQR8Jb8xWnVbApfaygJ8tNoZfgPwsgx9kx");
+    list.push_back(Box::new(Sanctum::new(&prog_sanctum)));
+    let _prog_pumpfun = Pubkey::from_str_const("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P");
+    // list.push_back(Box::new(Solpipe::new(&prog_orca)));
+    // pumpfun amm pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA
 
     let filter = Box::new(CatscopeFilter::new(list, hi));
     Box::into_raw(filter) as u64
